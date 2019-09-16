@@ -1,17 +1,26 @@
-// URL API LINE
+<?php
 $API_URL = 'https://api.line.me/v2/bot/message';
-// ใส่ Channel access token (long-lived)
-$ACCESS_TOKEN = '+cOVlu4LPFMX58bzsPLLEUgCvqCHAQOqEJF54UJhZiIjL6+IZFUP458LET61ECerE7vafr10HI02Y4QDxlW4/3ocsvI5hBsAB6hIZHJaO6ttX8PoLidn0CotTi1vZXg8udVF397ig2qprwgiIAWbTAdB04t89/1O/w1cDnyilFU=';
-// ใส่ Channel Secret
-$CHANNEL_SECRET = '870a2611e00dbc8acc0d8e33800ea555';
-
-// Set HEADER
+$ACCESS_TOKEN = '+cOVlu4LPFMX58bzsPLLEUgCvqCHAQOqEJF54UJhZiIjL6+IZFUP458LET61ECerE7vafr10HI02Y4QDxlW4/3ocsvI5hBsAB6hIZHJaO6ttX8PoLidn0CotTi1vZXg8udVF397ig2qprwgiIAWbTAdB04t89/1O/w1cDnyilFU='; 
+$channelSecret = '870a2611e00dbc8acc0d8e33800ea555';
 $POST_HEADER = array('Content-Type: application/json', 'Authorization: Bearer ' . $ACCESS_TOKEN);
-// Get request content
-$request = file_get_contents('php://input');
-// Decode JSON to Array
-$request_array = json_decode($request, true);
-
+$request = file_get_contents('php://input');   // Get request content
+$request_array = json_decode($request, true);   // Decode JSON to Array
+if ( sizeof($request_array['events']) > 0 ) {
+    foreach ($request_array['events'] as $event) {
+        $reply_message = '';
+        $reply_token = $event['replyToken'];
+        $text = $event['message']['text'];
+        $data = [
+            'replyToken' => $reply_token,
+            // 'messages' => [['type' => 'text', 'text' => json_encode($request_array) ]]  Debug Detail message
+            'messages' => [['type' => 'text', 'text' => $text ]]
+        ];
+        $post_body = json_encode($data, JSON_UNESCAPED_UNICODE);
+        $send_result = send_reply_message($API_URL.'/reply', $POST_HEADER, $post_body);
+        echo "Result: ".$send_result."\r\n";
+    }
+}
+echo "OK";
 function send_reply_message($url, $post_header, $post_body)
 {
     $ch = curl_init($url);
@@ -22,24 +31,6 @@ function send_reply_message($url, $post_header, $post_body)
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
     $result = curl_exec($ch);
     curl_close($ch);
-
     return $result;
 }
-if ( sizeof($request_array['events']) > 0 ) {
-      foreach ($request_array['events'] as $event) {
-      
-      $reply_message = '';
-      $reply_token = $event['replyToken'];
-      $data = [
-         'replyToken' => $reply_token,
-         'messages' => [
-            ['type' => 'text', 
-             'text' => json_encode($request_array)]
-         ]
-      ];
-      $post_body = json_encode($data, JSON_UNESCAPED_UNICODE);
-      $send_result = send_reply_message($API_URL.'/reply', $POST_HEADER, $post_body);
-      echo "Result: ".$send_result."\r\n";
-   }
-}
-echo "OK";
+?>
