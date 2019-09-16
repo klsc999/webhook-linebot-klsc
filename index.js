@@ -1,35 +1,38 @@
-<?php
-$API_URL = 'https://api.line.me/v2/bot/message';
-$ACCESS_TOKEN = ''; 
-$channelSecret = '';
-$POST_HEADER = array('Content-Type: application/json', 'Authorization: Bearer ' . $ACCESS_TOKEN);
-$request = file_get_contents('php://input');   // Get request content
-$request_array = json_decode($request, true);   // Decode JSON to Array
-if ( sizeof($request_array['events']) > 0 ) {
-    foreach ($request_array['events'] as $event) {
-        $reply_message = '';
-        $reply_token = $event['replyToken'];
-        $data = [
-            'replyToken' => $reply_token,
-            'messages' => [['type' => 'text', 'text' => json_encode($request_array)]]
-        ];
-        $post_body = json_encode($data, JSON_UNESCAPED_UNICODE);
-        $send_result = send_reply_message($API_URL.'/reply', $POST_HEADER, $post_body);
-        echo "Result: ".$send_result."\r\n";
-        
+const express = require('express')
+const bodyParser = require('body-parser')
+const request = require('request')
+const app = express()
+const port = process.env.PORT || 4000
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+app.post('/webhook', (req, res) => {
+    let reply_token = req.body.events[0].replyToken
+    reply(reply_token)
+    res.sendStatus(200)
+})
+app.listen(port)
+function reply(reply_token) {
+    let headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer +cOVlu4LPFMX58bzsPLLEUgCvqCHAQOqEJF54UJhZiIjL6+IZFUP458LET61ECerE7vafr10HI02Y4QDxlW4/3ocsvI5hBsAB6hIZHJaO6ttX8PoLidn0CotTi1vZXg8udVF397ig2qprwgiIAWbTAdB04t89/1O/w1cDnyilFU=
+'
     }
+    let body = JSON.stringify({
+        replyToken: reply_token,
+        messages: [{
+            type: 'text',
+            text: 'Hello'
+        },
+        {
+            type: 'text',
+            text: 'How are you?'
+        }]
+    })
+    request.post({
+        url: 'https://api.line.me/v2/bot/message/reply',
+        headers: headers,
+        body: body
+    }, (err, res, body) => {
+        console.log('status = ' + res.statusCode);
+    });
 }
-echo "OK";
-function send_reply_message($url, $post_header, $post_body)
-{
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $post_header);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    return $result;
-}
-?>
